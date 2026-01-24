@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="PropFly: Learning to Propagate via On-the-Fly Supervision from Pre-trained Video Diffusion Models">
+  <meta name="keywords" content="PropFly, Propagation, Video Diffusion Models, CVPR 2026">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>PropFly Project Page</title>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Ccircle cx='12' cy='12' r='2' fill='%23f97316'/%3E%3Cpath d='M12 12 C12 8 16 5 19 5 C22 5 20 10 12 12 Z' fill='%23f97316' opacity='0.8'/%3E%3Cpath d='M12 12 C15.46 14 17 19 15.5 21.6 C14 24.2 10 20 12 12 Z' fill='%23f97316' opacity='0.8'/%3E%3Cpath d='M12 12 C8.54 14 2 15 0.5 12.4 C-1 9.8 8 10 12 12 Z' fill='%23f97316' opacity='0.8'/%3E%3C/svg%3E">
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  
+  <style>
+    /* --- General Styles --- */
+    :root {
+        --primary-color: #000000; 
+        /* [Theme] Orange & Blue */
+        --theme-color: #f97316;       /* Vibrant Orange */
+        --theme-dark: #ea580c;        /* Darker Orange */
+        --gradient-start: #fb923c;    /* Light Orange */
+        --gradient-end: #3b82f6;      /* Royal Blue */
+    }
+    
+    /* Gradient Text (Orange -> Red -> Blue) */
+    .text-gradient { 
+        background: -webkit-linear-gradient(120deg, #f97316, #ef4444, #3b82f6); 
+        -webkit-background-clip: text; 
+        -webkit-text-fill-color: transparent; 
+        background-clip: text;
+    }
+    
+    .title.is-3 {
+        color: var(--primary-color);
+        border-left: none;
+        padding-left: 0;
+        font-weight: 800;
+    }
+    .content b, .content strong {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    /* --- PropFly Icon Animation --- */
+    @keyframes prop-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .prop-icon {
+        display: inline-block;
+        animation: prop-spin 10s linear infinite;
+    }
+    .publication-title:hover .prop-icon {
+        animation-duration: 2s; /* Hover시 더 빠르게 */
+    }
+
+    /* --- Caption Box Styles --- */
+    .caption-wrapper { margin-bottom: 2rem; }
+    
+    .caption-box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 15px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+    }
+    
+    /* Target Box Style */
+    .caption-box.target-box {
+      background-color: #ffffff;       
+      border: 2px solid #fdba74;       
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15); 
+    }
+
+    .caption-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .caption-content {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.05rem;
+      color: #333;
+      line-height: 1.4;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: keep-all; 
+      overflow-wrap: break-word;
+    }
+
+    /* --- Video/Image Containers --- */
+    .demo-video, .reference-image, .comp-video, .comp-image {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: block;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+    
+    .reference-frame-container, .comp-ref-container {
+      position: relative;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      padding: 2px;
+      background: white;
+    }
+
+    .reference-frame-container { border: 2px solid var(--theme-color); } 
+    .comp-ref-container { border: 2px solid #aaa; }
+    
+    .frame-badge {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background-color: var(--theme-color);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      z-index: 5;
+    }
+    
+    /* --- Tab Styles --- */
+    .tabs.is-toggle li.is-active a {
+      background-color: var(--theme-color) !important;
+      border-color: var(--theme-color) !important;
+    }
+
+    /* --- Comparison List Styles --- */
+    .comparison-item {
+      background-color: #fafaf9; 
+      border-radius: 15px;
+      padding: 25px 20px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    
+    .comp-header {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    
+    .ours-header {
+      color: var(--theme-color);
+      font-weight: 800;
+    }
+
+    /* Ours Wrapper Gradient */
+    .ours-wrapper {
+      padding: 3px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+    .ours-wrapper .comp-video { border-radius: 5px; }
+
+    /* --- Mobile Grid Buttons --- */
+    .mobile-comp-btn {
+        width: 100%;
+        padding: 10px 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid #dbdbdb;
+        background: white;
+        border-radius: 8px;
+        color: #363636;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        height: 100%;
+    }
+
+    .mobile-comp-btn.is-active, 
+    .tabs-mobile-grid li.is-active a {
+        background-color: var(--theme-color) !important;
+        color: white !important;
+        border-color: var(--theme-color) !important;
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+    }
+
+    #comp-mobile-tabs-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* --- Responsive --- */
+    @media screen and (max-width: 768px) {
+      .arrow-container { padding: 5px 0 !important; }
+      .arrow-container .fa-arrow-right { transform: rotate(90deg); }
+      .caption-box { text-align: center; }
+      .caption-container .columns { flex-direction: column; }
+      .hrbp-responsive { width: 100%; }
+      .comp-header { font-size: 0.8rem; }
+      
+      .tabs-mobile-grid ul {
+        display: grid !important; 
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+        gap: 8px;
+        border-bottom: none !important; 
+        display: block; 
+      }
+      .tabs-mobile-grid li { width: auto !important; display: block !important; margin: 0 !important; }
+      .tabs-mobile-grid li a { border-radius: 8px !important; border: 1px solid #dbdbdb !important; margin-bottom: 0 !important; height: 40px; }
+      .tabs.is-toggle li:first-child a, .tabs.is-toggle li:last-child a { border-radius: 8px !important; }
+    }
+    @media screen and (min-width: 769px) {
+        .hrbp-responsive { width: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-widescreen">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            
+            <h1 class="title publication-title" style="font-weight: 800; font-size: 2.4rem;">
+              <span class="icon prop-icon" style="color: #f97316; vertical-align: middle; margin-right: 5px; font-size: 1.0em; width: 1.2em; height: 1.2em; position: relative; top: -3px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+                    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+                    <path d="M12 12 C12 8 16 5 19 5 C22 5 20 10 12 12 Z" fill="currentColor" opacity="0.8"></path>
+                    <path d="M12 12 C15.46 14 17 19 15.5 21.6 C14 24.2 10 20 12 12 Z" fill="currentColor" opacity="0.8"></path>
+                    <path d="M12 12 C8.54 14 2 15 0.5 12.4 C-1 9.8 8 10 12 12 Z" fill="currentColor" opacity="0.8"></path>
+                  </svg>
+              </span>
+              
+              <span style="background: -webkit-linear-gradient(120deg, #f97316, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                PropFly: Learning to Propagate via On-the-Fly Supervision
+              </span>
+              <br>
+              <span style="color: #4b5563; font-size: 0.9em; font-weight: 600; letter-spacing: -0.5px; text-shadow: 1px 1px 1px rgba(0,0,0,0.05);">
+                  from Pre-trained Video Diffusion Models
+              </span>
+            </h1>
+            
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://www.viclab.kaist.ac.kr/">Wonyong Seo</a><sup>1*</sup>,
+              </span>
+              <span class="author-block" style="margin-left: 10px;">
+                <a href="https://sites.google.com/view/jaehomoon/">Jaeho Moon</a><sup>1*</sup>,
+              </span><br>
+              <span class="author-block">
+                <a href="https://sites.google.com/view/knuairlab/">Jaehyup Lee</a><sup>2†</sup>,
+              </span>
+              <span class="author-block" style="margin-left: 10px;">
+                <a href="https://sites.google.com/view/sooyekim">Soo Ye Kim</a><sup>3†</sup>,
+              </span>
+              <span class="author-block" style="margin-left: 10px;">
+                <a href="https://www.viclab.kaist.ac.kr/">Munchurl Kim</a><sup>1†</sup>
+              </span>
+            </div>
+            
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>Korea Advanced Institute of Science and Technology (KAIST),</span><br>
+              <span class="author-block"><sup>2</sup>Kyungpook National University,</span>
+              <span class="author-block" style="margin-left: 10px;"><sup>3</sup>Adobe Research</span>
+            </div>
+            <div class="is-size-6 publication-authors">
+              <span class="author-block"><sup>*</sup>Co-first authors (Equal contribution),</span>
+              <span class="author-block" style="margin-left: 10px;"><sup>†</sup>Co-corresponding authors</span>
+            </div>
+            
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block"><a href="" class="external-link button is-normal is-rounded is-dark"><span class="icon"><i class="fas fa-file-pdf"></i></span><span>Paper</span></a></span>
+                <span class="link-block"><a href="" class="external-link button is-normal is-rounded is-dark"><span class="icon"><i class="ai ai-arxiv"></i></span><span>arXiv</span></a></span>
+                <span class="link-block"><a href="" class="external-link button is-normal is-rounded is-dark"><span class="icon"><i class="fab fa-github"></i></span><span>Code</span></a></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Video Propagation Demos</h2>
+          <div class="content has-text-centered">
+            <p class="is-size-5">
+              <span style="color: #ef4444; font-weight: 800;">Click</span> the tabs below to see how PropFly propagates edits.
+            </p>
+          </div>
+
+          <div class="tabs is-centered is-toggle is-rounded tabs-mobile-grid">
+            <ul id="demo-tabs">
+              </ul>
+          </div>
+
+          <div class="box" style="background-color: #fff7ed; border-radius: 15px; padding: 20px;">
+            
+            <div class="caption-wrapper mb-5">
+              <div class="columns is-vcentered is-variable is-2">
+                
+                <div class="column is-4-tablet is-12-mobile">
+                  <div class="caption-box source-box">
+                    <div class="caption-header">Source</div>
+                    <div id="demo-caption-src" class="caption-content">Loading...</div>
+                  </div>
+                </div>
+
+                <div class="column is-narrow has-text-centered arrow-container">
+                  <span class="icon is-medium has-text-grey-light">
+                    <i class="fas fa-arrow-right fa-lg"></i>
+                  </span>
+                </div>
+
+                <div class="column is-auto is-12-mobile">
+                  <div class="caption-box target-box">
+                    <div class="caption-header" style="color: #f97316;">Target</div>
+                    <div id="demo-caption-tgt" class="caption-content">Loading...</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="columns is-vcentered is-centered">
+              
+              <div class="column is-4 has-text-centered">
+                <p class="title is-5">Source Video</p>
+                <div class="video-wrapper">
+                  <video id="demo-src-video" class="demo-video" autoplay muted loop playsinline>
+                    <source src="" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+
+              <div class="column is-4 has-text-centered">
+                <p class="title is-5">PropFly (Result 1)</p>
+                <div class="reference-frame-container">
+                  <span class="frame-badge">Edited First Frame 1</span>
+                  <img id="demo-ref-img-1" src="" alt="Reference Frame 1" class="reference-image">
+                </div>
+                <div class="video-wrapper">
+                  <video id="demo-res-video-1" class="demo-video" autoplay muted loop playsinline>
+                    <source src="" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+
+              <div class="column is-4 has-text-centered">
+                <p class="title is-5">PropFly (Result 2)</p>
+                <div class="reference-frame-container">
+                  <span class="frame-badge">Edited First Frame 2</span>
+                  <img id="demo-ref-img-2" src="" alt="Reference Frame 2" class="reference-image">
+                </div>
+                <div class="video-wrapper">
+                  <video id="demo-res-video-2" class="demo-video" autoplay muted loop playsinline>
+                    <source src="" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Propagation-based video editing enables precise user control by propagating a single edited frame into following frames while maintaining the original context. However, training such models typically requires large-scale, paired (source and edited) video datasets, which are costly and complex to acquire.
+            </p>
+            <p>
+              Hence, we propose <span style="color: #f97316; font-weight: 800;">PropFly</span>, a training pipeline for <span style="color: #f97316; font-weight: 700;">Prop</span>agation-based video editing, relying on on-the-<span style="color: #f97316; font-weight: 700;">Fly</span> supervision from pre-trained video diffusion models (VDMs) instead of requiring off-the-shelf datasets. Specifically, PropFly leverages one-step clean latent estimations with <b>varying Classifier-Free Guidance (CFG) scales</b> to synthesize diverse pairs of 'source' (low-CFG) and 'edited' (high-CFG) latents. Our pipeline enables an adapter to learn propagation via <b>Guidance-Modulated Flow Matching (GMFM) loss</b>, which guides the model to replicate the target transformation.
+            </p>
+            <p>
+              Our on-the-fly supervision ensures the model learns <b>temporally consistent</b> and dynamic transformations. Extensive experiments demonstrate that PropFly <b>significantly outperforms</b> state-of-the-art methods on various video editing tasks, producing high-quality results.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Proposed Framework</h2>
+          <div class="content has-text-justified">
+            <p>
+              The overall PropFly training pipeline.
+            </p>
+            <p>
+              <b>(a) Data Sampling & RSPF:</b> We sample a video-text pair and synthesize an augmented prompt by appending a random style description to enrich training diversity.
+            </p>
+            <p>
+              <b>(b) On-the-fly Data Pair Generation:</b> A frozen pre-trained VDM synthesizes structurally aligned yet semantically distinct source (low-CFG) and target (high-CFG) latent pairs on the fly.
+            </p>
+            <p>
+              <b>(c) Guidance-Modulated Flow Matching:</b> A trainable adapter learns to propagate edits by predicting the VDM's high-CFG velocity, conditioned on the source video structure and the edited first frame style via GMFM loss.
+            </p>
+          </div>
+          <img src="./static/images/main_architecture.png" class="interpolation-image" alt="Proposed Framework" style="width: 100%; margin-top: 0px;"/>
+          <p class="is-size-6 has-text-black"><b>Figure 1.</b>Overview of our PropFly training pipeline</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Quantitative Results</h2>
+          <div class="content has-text-justified">
+            <p>
+              We quantitatively evaluate <span style="color: #f97316; font-weight: 800;">PropFly</span> against <b>state-of-the-art</b> text-guided and propagation-based methods on the <b>EditVerseBench</b> and <b>TGVE</b> benchmarks. Extensive experiments demonstrate that PropFly <b>significantly outperforms</b> existing baselines, achieving superior scores in <b>video quality</b>, <b>text alignment</b>, and <b>temporal consistency</b>.
+            </p>
+          </div>
+          
+          <div class="columns is-centered is-vcentered">
+           <div class="column is-half has-text-centered">
+              <img src="./static/images/quantitative1.png" alt="Quantitative Results 1" style="width: 100%; margin-top: 10px;"/>
+              <p class="is-size-6 has-text-black"><b>Table 1.</b> Quantitative comparison on the subset of EditVerseBench.</p>
+           </div>
+           <div class="column is-half has-text-centered">
+              <img src="./static/images/quantitative2.png" alt="Quantitative Results 2" style="width: 100%;"/>
+              <p class="is-size-6 has-text-black"><b>Table 2.</b> Quantitative comparison on TGVE benchmark.</p>
+           </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Qualitative Comparison</h2>
+          <div class="content has-text-centered mb-6">
+            <p>
+              Comparison against state-of-the-art propagation-based methods.<br>
+              <b>PropFly (Ours)</b> successfully propagates the edit while preserving the original motion and structure better than baselines.
+            </p>
+          </div>
+
+          <div id="comp-mobile-tabs-container" class="is-hidden-tablet">
+              </div>
+
+          <div id="comparison-list">
+            </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="content has-text-centered">
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="content">
+              <p>
+                This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0 License</a>.
+                <br>
+                Website template adapted from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.
+                <br>
+                Please visit our <a href="https://github.com/KAIST-VICLab">VIC-Lab</a> for more interesting researches.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  
+  <script>
+    const demoData = [
+      { 
+        name: "Boat", 
+        folder: "boat_anime",
+        srcCaption: "‘A fishing boat sails through water’",
+        tgtCaption: "‘A fishing boat sails through water <b>in Japanese anime style</b>’"
+      },
+      { 
+        name: "Flamingo", 
+        folder: "flamingo_winter",
+        srcCaption: "‘Flamingos walking through water’",
+        tgtCaption: "‘Flamingos walking through <b>icy</b> water’"
+      },
+      { 
+        name: "Horse", 
+        folder: "horsejump_sunset",
+        srcCaption: "‘A horse is jumping’",
+        tgtCaption: "‘A horse is jumping <b>in sunset</b>’"
+      },
+      { 
+        name: "Car", 
+        folder: "car_sunrise",
+        srcCaption: "‘A car is driving’",
+        tgtCaption: "‘A car is driving <b>in sunrise</b>’"
+      },
+      { 
+        name: "Plane", 
+        folder: "plane_storm",
+        srcCaption: "‘An aircraft moves forward in <b>cloudy day</b>’",
+        tgtCaption: "‘An aircraft moves forward in <b>storm</b>’"
+      },
+      { 
+        name: "Rollerblade", 
+        folder: "rollerblade_robot",
+        srcCaption: "‘A <b>person</b> is rollerblading’",
+        tgtCaption: "‘A <b>robot</b> is rollerblading’"
+      },
+      { 
+        name: "Hockey", 
+        folder: "hockey_robot",
+        srcCaption: "‘A <b>person</b> is playing roller hockey’",
+        tgtCaption: "‘A <b>robot</b> is playing roller hockey <b>in a dystopian city</b>’"
+      }
+    ];
+
+    const basePath = "./static/videos/PropFly_videos/";
+    
+    const demoTabs = document.getElementById('demo-tabs');
+    const captionSrc = document.getElementById('demo-caption-src');
+    const captionTgt = document.getElementById('demo-caption-tgt');
+    const srcVideo = document.getElementById('demo-src-video');
+    const refImg1 = document.getElementById('demo-ref-img-1');
+    const resVideo1 = document.getElementById('demo-res-video-1');
+    const refImg2 = document.getElementById('demo-ref-img-2');
+    const resVideo2 = document.getElementById('demo-res-video-2');
+
+    function initDemo() {
+      demoTabs.innerHTML = '';
+      demoData.forEach((scene, index) => {
+        const li = document.createElement('li');
+        if (index === 0) li.classList.add('is-active');
+        const a = document.createElement('a');
+        a.textContent = scene.name;
+        a.onclick = () => updateDemo(index);
+        li.appendChild(a);
+        demoTabs.appendChild(li);
+      });
+      updateDemo(0);
+    }
+
+    function updateDemo(index) {
+      const tabs = demoTabs.querySelectorAll('li');
+      tabs.forEach((tab, i) => {
+        if (i === index) tab.classList.add('is-active');
+        else tab.classList.remove('is-active');
+      });
+
+      const data = demoData[index];
+      const path = `${basePath}${data.folder}/`;
+
+      captionSrc.innerHTML = data.srcCaption;
+      captionTgt.innerHTML = data.tgtCaption;
+
+      srcVideo.src = `${path}input.mp4`;
+      refImg1.src = `${path}input_1.png`;
+      resVideo1.src = `${path}propfly_1.mp4`;
+      refImg2.src = `${path}input_2.png`;
+      resVideo2.src = `${path}propfly_2.mp4`;
+
+      [srcVideo, resVideo1, resVideo2].forEach(v => {
+        v.load();
+        v.play().catch(e => {});
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initDemo);
+  </script>
+
+  <script>
+    const compData = [
+      {
+        name: "Panda",
+        folder: "panda_snow",
+        srcCaption: "‘A <b>bear</b> walks <b>on rocks</b>’",
+        tgtCaption: "‘A <b>panda</b> walks <b>through snowy bamboo</b>’"
+      },
+      {
+        name: "Robot City",
+        folder: "lucia_city",
+        srcCaption: "‘A <b>woman</b> walks in a <b>park</b>’",
+        tgtCaption: "‘A <b>robot</b> walks through a <b>ruined city</b>’"
+      },
+      {
+        name: "Unicorn",
+        folder: "horsejump_unicorn",
+        srcCaption: "‘A <b>horse</b> is jumping’",
+        tgtCaption: "‘A <b>white unicorn</b> is jumping’"
+      },
+      {
+        name: "Horse",
+        folder: "camel_horse",
+        srcCaption: "‘A <b>camel</b> is walking’",
+        tgtCaption: "‘A <b>horse</b> is walking’"
+      },
+      {
+        name: "Bus",
+        folder: "bus_building",
+        srcCaption: "‘A <b>bus</b> is driving on a street’",
+        tgtCaption: "‘An <b>articulated bus</b> is driving <strong>near a building</strong>’"
+      },
+      {
+        name: "Robot",
+        folder: "rollerblade_robot",
+        srcCaption: "‘A <b>person</b> is rollerblading’",
+        tgtCaption: "‘A <b>robot</b> is rollerblading’"
+      },
+      {
+        name: "Cyberpunk",
+        folder: "lucia_cyberpunk",
+        srcCaption: "‘A <b>person</b> walks in a park’",
+        tgtCaption: "‘A <b>robot</b> walks in a park <b>in a cyberpunk style</b>’"
+      },
+      {
+        name: "Robot Camel",
+        folder: "camel_cyberpunk",
+        srcCaption: "‘A <b>camel</b> is walking’",
+        tgtCaption: "‘A <b>robot camel</b> is walking <b>in a cyberpunk city</b>’"
+      },
+      {
+        name: "Scooter",
+        folder: "scooter_night",
+        srcCaption: "‘A person is driving a scooter’",
+        tgtCaption: "‘A person is driving a scooter <b>at night</b>’"
+      },
+      {
+        name: "Car",
+        folder: "car_cloud",
+        srcCaption: "‘A car is driving on a <b>street sunny day</b>’",
+        tgtCaption: "‘A car is driving on a <b>wet street, cloudy day</b>’"
+      },
+      {
+        name: "Monkey",
+        folder: "koala_monkey",
+        srcCaption: "‘A <b>koala</b> is climbing a tree branch’",
+        tgtCaption: "‘A <b>monkey</b> is climbing a tree branch’"
+      },
+      {
+        name: "Paper Boat",
+        folder: "blackswan_paperboat",
+        srcCaption: "‘A <b>black swan</b> is floating on the water’",
+        tgtCaption: "‘A <b>white paper boat</b> is floating on the water’"
+      }
+    ];
+
+    const compBasePath = "./static/videos/comparison_videos/"; 
+    const listContainer = document.getElementById('comparison-list');
+    const mobileTabsContainer = document.getElementById('comp-mobile-tabs-container');
+    
+    let activeCompIndex = 0;
+
+    function getCompItemHTML(data) {
+        const path = `${compBasePath}${data.folder}/`;
+        return `
+          <div class="comparison-item">
+            <div class="caption-wrapper">
+              <div class="columns is-vcentered is-variable is-2">
+                <div class="column is-4-tablet is-12-mobile">
+                  <div class="caption-box source-box">
+                    <div class="caption-header">Source</div>
+                    <div class="caption-content">${data.srcCaption}</div>
+                  </div>
+                </div>
+                <div class="column is-narrow has-text-centered arrow-container">
+                  <span class="icon is-medium has-text-grey-light">
+                    <i class="fas fa-arrow-right fa-lg"></i>
+                  </span>
+                </div>
+                <div class="column is-auto is-12-mobile">
+                  <div class="caption-box target-box">
+                    <div class="caption-header" style="color: #f97316;">Target</div>
+                    <div class="caption-content">${data.tgtCaption}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="columns is-centered is-multiline is-variable is-2">
+              <div class="column is-one-fifth-widescreen is-4-tablet is-12-mobile">
+                <div class="comp-header">Input Video</div>
+                <div class="video-wrapper">
+                  <video class="comp-video" autoplay muted loop playsinline>
+                    <source src="${path}input.mp4" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+              <div class="column is-one-fifth-widescreen is-4-tablet is-12-mobile">
+                <div class="comp-header">Edited First Frame</div>
+                <div class="comp-ref-container">
+                  <span class="frame-badge">Ref</span>
+                  <img src="${path}input.png" alt="Input Image" class="comp-image">
+                </div>
+              </div>
+              <div class="column is-one-fifth-widescreen is-4-tablet is-12-mobile">
+                <div class="comp-header ours-header">PropFly (Ours)</div>
+                <div class="video-wrapper ours-wrapper">
+                  <video class="comp-video" autoplay muted loop playsinline>
+                    <source src="${path}propfly.mp4" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+              <div class="column is-one-fifth-widescreen is-4-tablet is-12-mobile">
+                <div class="comp-header">Señorita</div>
+                <div class="video-wrapper">
+                  <video class="comp-video" autoplay muted loop playsinline>
+                    <source src="${path}senorita.mp4" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+              <div class="column is-one-fifth-widescreen is-4-tablet is-12-mobile">
+                <div class="comp-header">AnyV2V</div>
+                <div class="video-wrapper">
+                  <video class="comp-video" autoplay muted loop playsinline>
+                    <source src="${path}anyv2v.mp4" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+    }
+
+    function renderComp() {
+      listContainer.innerHTML = ''; 
+      mobileTabsContainer.innerHTML = '';
+      
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        compData.forEach((data, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'mobile-comp-btn';
+            if (index === activeCompIndex) btn.classList.add('is-active');
+            btn.textContent = data.name;
+            btn.onclick = () => {
+                activeCompIndex = index;
+                renderComp(); 
+            };
+            mobileTabsContainer.appendChild(btn);
+        });
+        const itemHTML = getCompItemHTML(compData[activeCompIndex]);
+        listContainer.insertAdjacentHTML('beforeend', itemHTML);
+      } else {
+        compData.forEach((data) => {
+            const itemHTML = getCompItemHTML(data);
+            listContainer.insertAdjacentHTML('beforeend', itemHTML);
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', renderComp);
+    window.addEventListener('resize', renderComp);
+  </script>
+</body>
+</html>
